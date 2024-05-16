@@ -3,13 +3,16 @@
 
     let weatherData = null;
     let error = null;
+    let selectedDay = null;
 
     async function fetchWeather() {
         try {
-            const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=45.490292&longitude=12.168120&hourly=temperature_2m,weathercode');
+            const response = await fetch(
+                'https://api.open-meteo.com/v1/forecast?latitude=45.490292&longitude=12.168120&daily=temperature_2m_max,weathercode&hourly=temperature_2m,weathercode'
+            );
             if (!response.ok) throw new Error('Failed to fetch weather data');
             const data = await response.json();
-            weatherData = data.hourly;
+            weatherData = data;
         } catch (err) {
             error = err.message;
         }
@@ -87,243 +90,174 @@
         return weatherIcons[code] || '❓';
     }
 
-    function formatDateTime(timestamp) {
+    function formatDate(timestamp) {
         const date = new Date(timestamp);
-        return date.toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const options = { weekday: 'short', day: 'numeric', month: 'short' };
+        return date.toLocaleDateString(undefined, options).toUpperCase();
+    }
+
+    function selectDay(index) {
+        selectedDay = selectedDay === index ? null : index;
     }
 </script>
 
 <style>
-    .weather-container {
-        font-family: Arial, sans-serif;
-        padding: 25px;
-        width: 70%;
-        margin: auto;
-        background-color: #f9f9f9;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    .error {
-        color: red;
-    }
-    .weather-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 10px;
-        margin-top: 20px;
-    }
-    .weather-item {
-        background-color: #fff;
-        padding: 10px;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        text-align: center;
-    }
-    .weather-item h3 {
+    body {
+        background-color: #F0F4F8;
+        font-family: 'Poppins', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
         margin: 0;
-        font-size: 0.75em;
+    }
+
+    .weather-container {
+        background-color: #FFFFFF;
+        width: 850px;
+        height: 550px;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: row;
+        overflow: hidden;
+    }
+
+    .weather-list {
+        width: 35%;
+        display: flex;
+        flex-direction: column;
+        padding: 15px;
+        background-color: #FAF9F9;
+        border-right: 1px solid #E0E0E0;
+        overflow-y: auto;
+    }
+
+    .weather-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        font-size: 14px;
+        color: #595959;
+        cursor: pointer;
+        transition: background 0.3s;
+        border-bottom: 1px solid #E0E0E0;
+    }
+
+    .weather-item:hover {
+        background-color: #F0F4F8;
+    }
+
+    .weather-item span {
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    .weather-icon {
+        font-size: 1.2em;
+    }
+
+    .weather-info {
+        width: 65%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: white;
+        padding: 20px;
+        position: relative;
+    }
+
+    .weather-info h1 {
+        font-size: 4em;
+        margin: 5px 0;
+        color: #007bff;
+    }
+
+    .weather-info p {
+        font-size: 1em;
+        margin: 5px 0;
         color: #333;
     }
-    .weather-item p {
-        margin: 5px 0 0;
-        font-size: 1.1em;
-        color: #007BFF;
-    }
-    .app {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-    }
 
-    main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 1rem;
-        width: 100%;
-        max-width: 64rem;
-        margin: 0 auto;
-        box-sizing: border-box;
-    }
-
-    footer {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 12px;
-    }
-
-    footer a {
-        font-weight: bold;
-    }
-
-    @media (min-width: 480px) {
-        footer {
-            padding: 12px 0;
-        }
-    }
-    section {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        flex: 0.6;
-    }
-
-    h1 {
-        color: #007BFF;
-        width: 100%;
-    }
-    main {
-        text-align: center;
-        padding: 1em;
-        max-width: 800px;
-        margin: 0 auto;
-        font-family: Arial, sans-serif;
-    }
-    .welcome {
-        display: block;
-        position: relative;
-        width: 100%;
-        height: 0;
-        padding: 0 0 calc(100% * 495 / 2048) 0;
-    }
-
-    .welcome img {
+    .search-place {
         position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        display: block;
-    }
-    @import '@fontsource/fira-mono';
-
-    :root {
-        --font-body: Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
-        Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        --font-mono: 'Fira Mono', monospace;
-        --color-bg-0: rgb(202, 216, 228);
-        --color-bg-1: hsl(209, 36%, 86%);
-        --color-bg-2: hsl(224, 44%, 95%);
-        --color-theme-1: #ff3e00;
-        --color-theme-2: #4075a6;
-        --color-text: rgba(0, 0, 0, 0.7);
-        --column-width: 42rem;
-        --column-margin-top: 4rem;
-        font-family: var(--font-body);
-        color: var(--color-text);
-    }
-
-    body {
-        min-height: 100vh;
-        margin: 0;
-        background-attachment: fixed;
-        background-color: var(--color-bg-1);
-        background-size: 100vw 100vh;
-        background-image: radial-gradient(
-                50% 50% at 50% 50%,
-                rgba(255, 255, 255, 0.75) 0%,
-                rgba(255, 255, 255, 0) 100%
-        ),
-        linear-gradient(180deg, var(--color-bg-0) 0%, var(--color-bg-1) 15%, var(--color-bg-2) 50%);
-    }
-
-    h1,
-    h2,
-    p {
-        font-weight: 400;
-    }
-
-    p {
-        line-height: 1.5;
-    }
-
-    a {
-        color: var(--color-theme-1);
-        text-decoration: none;
-    }
-
-    a:hover {
-        text-decoration: underline;
-    }
-
-    h1 {
-        font-size: 2rem;
-        text-align: center;
-    }
-
-    h2 {
-        font-size: 1rem;
-    }
-
-    pre {
-        font-size: 16px;
-        font-family: var(--font-mono);
-        background-color: rgba(255, 255, 255, 0.45);
-        border-radius: 3px;
-        box-shadow: 2px 2px 6px rgb(255 255 255 / 25%);
-        padding: 0.5em;
-        overflow-x: auto;
-        color: var(--color-text);
-    }
-
-    .text-column {
+        top: 15px;
+        right: 15px;
         display: flex;
-        max-width: 48rem;
-        flex: 0.6;
-        flex-direction: column;
-        justify-content: center;
-        margin: 0 auto;
+        align-items: center;
     }
 
-    input,
-    button {
-        font-size: inherit;
-        font-family: inherit;
-    }
-
-    button:focus:not(:focus-visible) {
+    .search-place input {
+        padding: 8px 15px;
+        border: 1px solid #E0E0E0;
+        border-radius: 20px;
+        margin-left: 10px;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 1em;
         outline: none;
     }
 
-    @media (min-width: 720px) {
-        h1 {
-            font-size: 2.4rem;
-        }
+    .hourly-details {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #666;
     }
 
-    .visually-hidden {
-        border: 0;
-        clip: rect(0 0 0 0);
-        height: auto;
-        margin: 0;
-        overflow: hidden;
-        padding: 0;
-        position: absolute;
-        width: 1px;
-        white-space: nowrap;
+    .hourly-details p {
+        display: flex;
+        justify-content: space-between;
+        margin: 5px 0;
     }
-
+    .iconSize{
+        width: 20px;
+        height: 20px;
+    }
 </style>
 
+<body>
 <div class="weather-container">
     {#if error}
         <p class="error">{error}</p>
     {:else if weatherData}
-        <h1>Weather Data</h1>
-        <div class="weather-grid">
-            {#each weatherData.temperature_2m as temp, index}
-                <div class="weather-item">
-                    <h3>{formatDateTime(weatherData.time[index])}</h3>
-                    <p>{temp}°C</p>
-                    <p style="font-size: 1.8em">{getWeatherIcon(weatherData.weathercode[index])}</p>
-                    <p style="font-size: 0.9em">{getWeatherDescription(weatherData.weathercode[index])}</p>
-
+        <div class="weather-list">
+            {#each weatherData.daily.temperature_2m_max as temp, index}
+                <div class="weather-item" on:click={() => selectDay(index)}>
+                    <span>{formatDate(weatherData.daily.time[index])}</span>
+                    <span class="weather-icon">{getWeatherIcon(weatherData.daily.weathercode[index])}</span>
+                    <span>{temp}°</span>
                 </div>
+                {#if selectedDay === index}
+                    <div class="hourly-details">
+                        {#each weatherData.hourly.temperature_2m
+                            .filter((_, hourIndex) =>
+                                new Date(weatherData.hourly.time[hourIndex]).toDateString() === new Date(weatherData.daily.time[index]).toDateString()
+                            )
+                            .slice(0, 24) as temp, hourIndex}
+                            <p>
+                                <span>{new Date(weatherData.hourly.time[hourIndex]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                <span>{temp}°</span>
+                                <span>{getWeatherIcon(weatherData.hourly.weathercode[hourIndex])}</span>
+                                <span>{getWeatherDescription(weatherData.hourly.weathercode[hourIndex])}</span>
+                            </p>
+                        {/each}
+                    </div>
+                {/if}
             {/each}
+        </div>
+        <div class="weather-info">
+            <div class="search-place">
+                <img src="search-icon.png" class="iconSize" alt="Search Icon" />
+                <input type="text" placeholder="search place" />
+            </div>
+            <h1>{weatherData.daily.temperature_2m_max[0]}°</h1>
+            <p>{getWeatherDescription(weatherData.daily.weathercode[0])}</p>
+            <p>{formatDate(weatherData.daily.time[0])}</p>
+            <p>Seoul, South Korea</p>
         </div>
     {:else}
         <p>Loading...</p>
     {/if}
 </div>
+</body>
